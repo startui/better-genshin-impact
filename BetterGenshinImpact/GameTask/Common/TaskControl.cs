@@ -1,4 +1,5 @@
 ﻿using BetterGenshinImpact.GameTask.AutoGeniusInvokation.Exception;
+using BetterGenshinImpact.GameTask.Model;
 using Fischless.GameCapture;
 using Microsoft.Extensions.Logging;
 using System;
@@ -124,7 +125,7 @@ public class TaskControl
     public static CaptureContent CaptureToContent(IGameCapture? gameCapture)
     {
         var bitmap = CaptureGameBitmap(gameCapture);
-        return new CaptureContent(bitmap, 0, 0, null!);
+        return new CaptureContent(bitmap, 0, 0);
     }
 
     public static CaptureContent CaptureToContent()
@@ -132,8 +133,18 @@ public class TaskControl
         return CaptureToContent(TaskTriggerDispatcher.GlobalGameCapture);
     }
 
+    public static RectArea CaptureToRectArea()
+    {
+        return CaptureToContent().CaptureRectArea;
+    }
+
     public static CaptureContent GetContentFromDispatcher()
     {
         return TaskTriggerDispatcher.Instance().GetLastCaptureContent();
+    }
+
+    public static RectArea GetRectAreaFromDispatcher()
+    {
+        return GetContentFromDispatcher().CaptureRectArea;
     }
 }

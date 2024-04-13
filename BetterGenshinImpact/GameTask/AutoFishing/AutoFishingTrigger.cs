@@ -53,7 +53,7 @@ namespace BetterGenshinImpact.GameTask.AutoFishing
 
         public AutoFishingTrigger()
         {
-            _autoFishingAssets = new AutoFishingAssets();
+            _autoFishingAssets = AutoFishingAssets.Instance;
         }
 
         public void Init()
@@ -140,7 +140,7 @@ namespace BetterGenshinImpact.GameTask.AutoFishing
                     var ro = new RecognitionObject()
                     {
                         Name = "StartFishingText",
-                        RecognitionType = RecognitionTypes.Ocr,
+                        RecognitionType = RecognitionTypes.OcrMatch,
                         RegionOfInterest = new Rect(srcMat.Width / 2, srcMat.Height / 2, srcMat.Width - srcMat.Width / 2,
                             srcMat.Height - srcMat.Height / 2),
                         AllContainMatchText = new List<string>
@@ -372,7 +372,7 @@ namespace BetterGenshinImpact.GameTask.AutoFishing
             Sleep(500);
 
             // 截图
-            var bitmap = CaptureGameBitmap(content.Dispatcher.GameCapture);
+            var bitmap = CaptureGameBitmap(TaskTriggerDispatcher.Instance().GameCapture);
             _selectedBaitName = fishpond.Fishes[0].FishType.BaitName; // 选择最多鱼吃的饵料
             _logger.LogInformation("选择鱼饵 {Text}", BaitType.FromName(_selectedBaitName).ChineseName);
 
@@ -432,7 +432,7 @@ namespace BetterGenshinImpact.GameTask.AutoFishing
             while (IsEnabled)
             {
                 // 截图
-                var bitmap = CaptureGameBitmap(content.Dispatcher.GameCapture);
+                var bitmap = CaptureGameBitmap(TaskTriggerDispatcher.Instance().GameCapture);
 
                 // 找 鱼饵落点
                 using var memoryStream = new MemoryStream();
@@ -749,7 +749,7 @@ namespace BetterGenshinImpact.GameTask.AutoFishing
             }
 
             // 更新当前捕获内容
-            _currContent = new CaptureContent(bitmap, _currContent.FrameIndex, _currContent.TimerInterval, _currContent.Dispatcher);
+            _currContent = new CaptureContent(bitmap, _currContent.FrameIndex, _currContent.TimerInterval);
             return bitmap;
         }
 

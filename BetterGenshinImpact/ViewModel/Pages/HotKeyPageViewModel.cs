@@ -7,23 +7,27 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
+using BetterGenshinImpact.GameTask.Common;
+using BetterGenshinImpact.GameTask.Common.BgiVision;
 using BetterGenshinImpact.Helpers.Extensions;
 using Microsoft.Extensions.Logging;
 using HotKeySettingModel = BetterGenshinImpact.Model.HotKeySettingModel;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using BetterGenshinImpact.GameTask.QucikBuy;
+using BetterGenshinImpact.GameTask.QuickSereniteaPot;
 using BetterGenshinImpact.Model;
 
 namespace BetterGenshinImpact.ViewModel.Pages;
 
-public partial class HotKeyPageViewModel : ObservableObject
+public partial class HotKeyPageViewModel : ObservableObject, IViewModel
 {
     private readonly ILogger<HotKeyPageViewModel> _logger;
     private readonly TaskSettingsPageViewModel _taskSettingsPageViewModel;
     public AllConfig Config { get; set; }
 
-    [ObservableProperty] private ObservableCollection<HotKeySettingModel> _hotKeySettingModels = new();
+    [ObservableProperty]
+    private ObservableCollection<HotKeySettingModel> _hotKeySettingModels = new();
 
     public HotKeyPageViewModel(IConfigService configService, ILogger<HotKeyPageViewModel> logger, TaskSettingsPageViewModel taskSettingsPageViewModel)
     {
@@ -230,6 +234,15 @@ public partial class HotKeyPageViewModel : ObservableObject
         ));
 
         HotKeySettingModels.Add(new HotKeySettingModel(
+            "按下快速进出尘歌壶",
+            nameof(Config.HotKeyConfig.QuickSereniteaPotHotkey),
+            Config.HotKeyConfig.QuickSereniteaPotHotkey,
+            Config.HotKeyConfig.QuickSereniteaPotHotkeyType,
+            (_, _) => { QuickSereniteaPotTask.Done(); },
+            true
+        ));
+
+        HotKeySettingModels.Add(new HotKeySettingModel(
             "启动/停止自动七圣召唤",
             nameof(Config.HotKeyConfig.AutoGeniusInvokationHotkey),
             Config.HotKeyConfig.AutoGeniusInvokationHotkey,
@@ -259,6 +272,50 @@ public partial class HotKeyPageViewModel : ObservableObject
             Config.HotKeyConfig.AutoDomainHotkey,
             Config.HotKeyConfig.AutoDomainHotkeyType,
             (_, _) => { _taskSettingsPageViewModel.OnSwitchAutoDomain(); }
+        ));
+
+        HotKeySettingModels.Add(new HotKeySettingModel(
+            "启动/停止自动追踪",
+            nameof(Config.HotKeyConfig.AutoTrackHotkey),
+            Config.HotKeyConfig.AutoTrackHotkey,
+            Config.HotKeyConfig.AutoTrackHotkeyType,
+            (_, _) => { _taskSettingsPageViewModel.OnSwitchAutoTrack(); }
+        ));
+
+        HotKeySettingModels.Add(new HotKeySettingModel(
+            "快捷点击原神内确认按钮",
+            nameof(Config.HotKeyConfig.ClickGenshinConfirmButtonHotkey),
+            Config.HotKeyConfig.ClickGenshinConfirmButtonHotkey,
+            Config.HotKeyConfig.ClickGenshinConfirmButtonHotkeyType,
+            (_, _) =>
+            {
+                if (Bv.ClickConfirmButton(TaskControl.CaptureToRectArea()))
+                {
+                    TaskControl.Logger.LogInformation("触发快捷点击原神内{Btn}按钮：成功", "确认");
+                }
+                else
+                {
+                    TaskControl.Logger.LogInformation("触发快捷点击原神内{Btn}按钮：未找到按钮图片", "确认");
+                }
+            }
+        ));
+
+        HotKeySettingModels.Add(new HotKeySettingModel(
+            "快捷点击原神内取消按钮",
+            nameof(Config.HotKeyConfig.ClickGenshinCancelButtonHotkey),
+            Config.HotKeyConfig.ClickGenshinCancelButtonHotkey,
+            Config.HotKeyConfig.ClickGenshinCancelButtonHotkeyType,
+            (_, _) =>
+            {
+                if (Bv.ClickCancelButton(TaskControl.CaptureToRectArea()))
+                {
+                    TaskControl.Logger.LogInformation("触发快捷点击原神内{Btn}按钮：成功", "取消");
+                }
+                else
+                {
+                    TaskControl.Logger.LogInformation("触发快捷点击原神内{Btn}按钮：未找到按钮图片", "取消");
+                }
+            }
         ));
     }
 

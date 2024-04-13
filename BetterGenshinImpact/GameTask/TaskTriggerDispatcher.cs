@@ -21,6 +21,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BetterGenshinImpact.GameTask.AutoSkip;
+using BetterGenshinImpact.GameTask.AutoSkip.Model;
 using Vanara.PInvoke;
 
 namespace BetterGenshinImpact.GameTask
@@ -216,6 +218,10 @@ namespace BetterGenshinImpact.GameTask
             {
                 Task.Run(() => { new AutoDomainTask((AutoDomainParam)param).Start(); });
             }
+            else if (taskType == IndependentTaskEnum.AutoTrack)
+            {
+                Task.Run(() => { new AutoTrackTask((AutoTrackParam)param).Start(); });
+            }
         }
 
         public void Dispose() => Stop();
@@ -323,7 +329,7 @@ namespace BetterGenshinImpact.GameTask
                 }
 
                 // 循环执行所有触发器 有独占状态的触发器的时候只执行独占触发器
-                var content = new CaptureContent(bitmap, _frameIndex, _timer.Interval, this);
+                var content = new CaptureContent(bitmap, _frameIndex, _timer.Interval);
                 var exclusiveTrigger = _triggers.FirstOrDefault(t => t is { IsEnabled: true, IsExclusive: true });
                 if (exclusiveTrigger != null)
                 {
@@ -436,7 +442,7 @@ namespace BetterGenshinImpact.GameTask
         public CaptureContent GetLastCaptureContent()
         {
             var bitmap = GetLastCaptureBitmap();
-            return new CaptureContent(bitmap, _frameIndex, _timer.Interval, this);
+            return new CaptureContent(bitmap, _frameIndex, _timer.Interval);
         }
 
         public void TakeScreenshot()

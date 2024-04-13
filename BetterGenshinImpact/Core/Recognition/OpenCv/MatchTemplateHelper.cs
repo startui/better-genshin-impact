@@ -21,7 +21,7 @@ public class MatchTemplateHelper
     /// <param name="matchMode">匹配方式</param>
     /// <param name="maskMat">遮罩</param>
     /// <param name="threshold">阈值</param>
-    /// <returns>左上角的标点</returns>
+    /// <returns>左上角的标点,由于(0,0)点作为未匹配的结果，所以不能做完全相同的模板匹配</returns>
     public static Point MatchTemplate(Mat srcMat, Mat dstMat, TemplateMatchModes matchMode, Mat? maskMat = null, double threshold = 0.8)
     {
         try
@@ -35,12 +35,17 @@ public class MatchTemplateHelper
             {
                 Cv2.MatchTemplate(srcMat, dstMat, result, matchMode, maskMat);
             }
-            // Cv2.Normalize(result, result, 0, 1, NormTypes.MinMax, -1, null);
+
+            if (matchMode is TemplateMatchModes.SqDiff or TemplateMatchModes.CCoeff or TemplateMatchModes.CCorr)
+            {
+                Cv2.Normalize(result, result, 0, 1, NormTypes.MinMax, -1, null);
+            }
+
             Cv2.MinMaxLoc(result, out var minValue, out var maxValue, out var minLoc, out var maxLoc);
 
             if (matchMode is TemplateMatchModes.SqDiff or TemplateMatchModes.SqDiffNormed)
             {
-                if (minValue <= threshold)
+                if (minValue <= 1 - threshold)
                 {
                     return minLoc;
                 }
@@ -217,9 +222,14 @@ public class MatchTemplateHelper
     /// <param name="threshold"></param>
     /// <param name="maxCount"></param>
     /// <returns></returns>
-    public static List<Rect> MatchOnePicForOnePic(Mat srcMat, Mat dstMat, TemplateMatchModes matchMode, Mat? maskMat, double threshold, int maxCount)
+    public static List<Rect> MatchOnePicForOnePic(Mat srcMat, Mat dstMat, TemplateMatchModes matchMode, Mat? maskMat, double threshold, int maxCount = -1)
     {
         List<Rect> list = new();
+
+        if (maxCount < 0)
+        {
+            maxCount = srcMat.Width * srcMat.Height / dstMat.Width / dstMat.Height;
+        }
 
         for (int i = 0; i < maxCount; i++)
         {

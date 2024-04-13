@@ -1,10 +1,13 @@
-﻿using BetterGenshinImpact.GameTask.Common.Map;
+﻿using BetterGenshinImpact.Core.Recognition.OpenCv;
+using BetterGenshinImpact.GameTask.Common.Map;
 using BetterGenshinImpact.View.Drawable;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using BetterGenshinImpact.GameTask.Common.BgiVision;
+using BetterGenshinImpact.GameTask.Common.Element.Assets;
 using Point = OpenCvSharp.Point;
 using Size = OpenCvSharp.Size;
 
@@ -27,7 +30,7 @@ public class TestTrigger : ITaskTrigger
 
     // private readonly YoloV8 _predictor = new(Global.Absolute("Assets\\Model\\Domain\\bgi_tree.onnx"));
 
-    private readonly BigMap _bigMap = new();
+    // private readonly Lazy<EntireMap> _bigMap = new();
 
     public TestTrigger()
     {
@@ -93,7 +96,21 @@ public class TestTrigger : ITaskTrigger
         //    Debug.WriteLine("没找到");
         //}
 
-        _bigMap.GetMapPositionAndDraw(content.CaptureRectArea.SrcMat);
+        // 小地图匹配测试
+        // var tar = ElementAssets.Instance.PaimonMenuRo.TemplateImageGreyMat!;
+        // var p = MatchTemplateHelper.MatchTemplate(content.CaptureRectArea.SrcGreyMat, tar, TemplateMatchModes.CCoeffNormed, null, 0.9);
+        // if (p.X == 0 || p.Y == 0)
+        // {
+        //     return;
+        // }
+        //
+        // _bigMap.GetMapPositionAndDrawBySurf(new Mat(content.CaptureRectArea.SrcGreyMat, new Rect(p.X + 24, p.Y - 15, 210, 210)));
+
+        // 大地图测试
+        // var mat = content.CaptureRectArea.SrcGreyMat;
+        // _bigMap.GetMapPositionAndDrawBySurf(mat);
+
+        // Bv.BigMapIsUnderground(content.CaptureRectArea);
     }
 
     // private void Detect(CaptureContent content)

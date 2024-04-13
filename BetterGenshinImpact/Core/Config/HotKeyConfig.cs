@@ -11,6 +11,12 @@ namespace BetterGenshinImpact.Core.Config;
 public partial class HotKeyConfig : ObservableObject
 {
     [ObservableProperty]
+    private string _autoTrackHotkey = "";
+
+    [ObservableProperty]
+    private string _autoTrackHotkeyType = HotKeyTypeEnum.KeyboardMonitor.ToString();
+
+    [ObservableProperty]
     private string _autoDomainHotkey = "";
 
     [ObservableProperty]
@@ -77,6 +83,12 @@ public partial class HotKeyConfig : ObservableObject
     private string _quickBuyHotkeyType = HotKeyTypeEnum.KeyboardMonitor.ToString();
 
     [ObservableProperty]
+    private string _quickSereniteaPotHotkey = "";
+
+    [ObservableProperty]
+    private string _quickSereniteaPotHotkeyType = HotKeyTypeEnum.KeyboardMonitor.ToString();
+
+    [ObservableProperty]
     private string _quickTeleportEnabledHotkey = "";
 
     [ObservableProperty]
@@ -101,4 +113,18 @@ public partial class HotKeyConfig : ObservableObject
 
     [ObservableProperty]
     private string _turnAroundHotkeyType = HotKeyTypeEnum.KeyboardMonitor.ToString();
+
+    // 点击确认按钮
+    [ObservableProperty]
+    private string _clickGenshinConfirmButtonHotkey = "";
+
+    [ObservableProperty]
+    private string _clickGenshinConfirmButtonHotkeyType = HotKeyTypeEnum.KeyboardMonitor.ToString();
+
+    // 点击取消按钮
+    [ObservableProperty]
+    private string _clickGenshinCancelButtonHotkey = "";
+
+    [ObservableProperty]
+    private string _clickGenshinCancelButtonHotkeyType = HotKeyTypeEnum.KeyboardMonitor.ToString();
 }

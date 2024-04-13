@@ -58,7 +58,7 @@ public class AutoSkipTrigger : ITaskTrigger
 
     public AutoSkipTrigger()
     {
-        _autoSkipAssets = new AutoSkipAssets();
+        _autoSkipAssets = AutoSkipAssets.Instance;
         _config = TaskContext.Instance().Config.AutoSkipConfig;
     }
 
@@ -203,21 +203,33 @@ public class AutoSkipTrigger : ITaskTrigger
         }
         else
         {
-            // 黑屏剧情要点击鼠标（多次） 几乎全黑的时候不用点击
-            using var grayMat = new Mat(content.CaptureRectArea.SrcGreyMat, new Rect(0, content.CaptureRectArea.SrcGreyMat.Height / 3, content.CaptureRectArea.SrcGreyMat.Width, content.CaptureRectArea.SrcGreyMat.Height / 3));
-            var blackCount = OpenCvCommonHelper.CountGrayMatColor(grayMat, 0);
-            var rate = blackCount * 1d / (grayMat.Width * grayMat.Height);
-            if (rate is >= 0.5 and < 0.98999)
-            {
-                Simulation.SendInputEx.Mouse.LeftButtonClick();
-                if ((DateTime.Now - _prevClickTime).TotalMilliseconds > 1000)
-                {
-                    _logger.LogInformation("自动剧情：{Text} 比例 {Rate}", "点击黑屏", rate.ToString("F"));
-                }
-
-                _prevClickTime = DateTime.Now;
-            }
+            ClickBlackGameScreen(content);
         }
+    }
+
+    /// <summary>
+    /// 黑屏点击判断
+    /// </summary>
+    /// <param name="content"></param>
+    /// <returns></returns>
+    private bool ClickBlackGameScreen(CaptureContent content)
+    {
+        // 黑屏剧情要点击鼠标（多次） 几乎全黑的时候不用点击
+        using var grayMat = new Mat(content.CaptureRectArea.SrcGreyMat, new Rect(0, content.CaptureRectArea.SrcGreyMat.Height / 3, content.CaptureRectArea.SrcGreyMat.Width, content.CaptureRectArea.SrcGreyMat.Height / 3));
+        var blackCount = OpenCvCommonHelper.CountGrayMatColor(grayMat, 0);
+        var rate = blackCount * 1d / (grayMat.Width * grayMat.Height);
+        if (rate is >= 0.5 and < 0.98999)
+        {
+            Simulation.SendInputEx.Mouse.LeftButtonClick();
+            if ((DateTime.Now - _prevClickTime).TotalMilliseconds > 1000)
+            {
+                _logger.LogInformation("自动剧情：{Text} 比例 {Rate}", "点击黑屏", rate.ToString("F"));
+            }
+
+            _prevClickTime = DateTime.Now;
+            return true;
+        }
+        return false;
     }
 
     private void HangoutOptionChoose(CaptureContent content)
@@ -234,9 +246,11 @@ public class AutoSkipTrigger : ITaskTrigger
             var drawList = selectedRects.Concat(unselectedRects).Select(rect => rect.ToRectDrawable()).ToList();
             VisionContext.Instance().DrawContent.PutOrRemoveRectList("HangoutIcon", drawList);
 
-            List<HangoutOption> hangoutOptionList = new();
-            hangoutOptionList.AddRange(selectedRects.Select(selectedRect => new HangoutOption(selectedRect, true)));
-            hangoutOptionList.AddRange(unselectedRects.Select(unselectedRect => new HangoutOption(unselectedRect, false)));
+            List<HangoutOption> hangoutOptionList =
+            [
+                .. selectedRects.Select(selectedRect => new HangoutOption(selectedRect, true)),
+                .. unselectedRects.Select(unselectedRect => new HangoutOption(unselectedRect, false)),
+            ];
             // 只有一个选项直接点击
             // if (hangoutOptionList.Count == 1)
             // {
@@ -546,22 +560,20 @@ public class AutoSkipTrigger : ITaskTrigger
         var exclamationRa = content.CaptureRectArea.Find(_autoSkipAssets.SubmitExclamationIconRo);
         if (!exclamationRa.IsEmpty())
         {
-            var rects = MatchTemplateHelper.MatchOnePicForOnePic(content.CaptureRectArea.SrcMat.CvtColor(ColorConversionCodes.BGRA2BGR),
-                _autoSkipAssets.SubmitGoodsMat, TemplateMatchModes.SqDiffNormed, null, 0.1, 4);
+            // var rects = MatchTemplateHelper.MatchOnePicForOnePic(content.CaptureRectArea.SrcMat.CvtColor(ColorConversionCodes.BGRA2BGR),
+            //     _autoSkipAssets.SubmitGoodsMat, TemplateMatchModes.SqDiffNormed, null, 0.9, 4);
+            var rects = ContoursHelper.FindSpecifyColorRects(content.CaptureRectArea.SrcMat, new Scalar(233, 229, 220), 100, 20);
             if (rects.Count == 0)
             {
                 return false;
             }
 
-            // 出现相交的矩形，只保留最初的
-            // var newRects = new List<Rect> { rects[0] };
+            // 画矩形并保存
             // foreach (var rect in rects)
             // {
-            //     if (!newRects.Any(newRect => newRect.IntersectsWith(rect)))
-            //     {
-            //         newRects.Add(rect);
-            //     }
+            //     Cv2.Rectangle(content.CaptureRectArea.SrcMat, rect, Scalar.Red, 1);
             // }
+            // Cv2.ImWrite("log/提交物品.png", content.CaptureRectArea.SrcMat);
 
             var captureArea = TaskContext.Instance().SystemInfo.CaptureAreaRect;
             var assetScale = TaskContext.Instance().SystemInfo.AssetScale;
@@ -573,7 +585,7 @@ public class AutoSkipTrigger : ITaskTrigger
                 TaskControl.Sleep(800);
                 content = TaskControl.CaptureToContent();
 
-                var btnBlackConfirmRa = content.CaptureRectArea.Find(ElementAssets.Instance().BtnBlackConfirm);
+                var btnBlackConfirmRa = content.CaptureRectArea.Find(ElementAssets.Instance.BtnBlackConfirm);
                 if (!btnBlackConfirmRa.IsEmpty())
                 {
                     btnBlackConfirmRa.ClickCenter();
@@ -585,10 +597,10 @@ public class AutoSkipTrigger : ITaskTrigger
             TaskControl.Sleep(500);
             content = TaskControl.CaptureToContent();
 
-            var btnWhiteConfirmRa = content.CaptureRectArea.Find(ElementAssets.Instance().BtnWhiteConfirm);
+            var btnWhiteConfirmRa = content.CaptureRectArea.Find(ElementAssets.Instance.BtnWhiteConfirm);
             if (!btnWhiteConfirmRa.IsEmpty())
             {
-                // btnWhiteConfirmRa.ClickCenter();
+                btnWhiteConfirmRa.ClickCenter();
                 _logger.LogInformation("提交物品：{Text}", "3. 交付");
 
                 VisionContext.Instance().DrawContent.ClearAll();

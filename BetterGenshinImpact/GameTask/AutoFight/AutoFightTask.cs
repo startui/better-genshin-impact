@@ -1,17 +1,14 @@
 ﻿using BetterGenshinImpact.GameTask.AutoFight.Model;
 using BetterGenshinImpact.GameTask.AutoFight.Script;
 using BetterGenshinImpact.GameTask.AutoGeniusInvokation.Exception;
-using BetterGenshinImpact.GameTask.Common;
 using BetterGenshinImpact.GameTask.Model.Enum;
 using BetterGenshinImpact.View.Drawable;
 using BetterGenshinImpact.ViewModel.Pages;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using static BetterGenshinImpact.GameTask.Common.TaskControl;
-using static Vanara.PInvoke.Gdi32;
 
 namespace BetterGenshinImpact.GameTask.AutoFight;
 
@@ -19,12 +16,12 @@ public class AutoFightTask
 {
     private readonly AutoFightParam _taskParam;
 
-    private readonly List<CombatCommand> _combatCommands;
+    private readonly CombatScriptBag _combatScriptBag;
 
     public AutoFightTask(AutoFightParam taskParam)
     {
         _taskParam = taskParam;
-        _combatCommands = CombatScriptParser.Parse(_taskParam.CombatStrategyContent);
+        _combatScriptBag = CombatScriptParser.ReadAndParse(_taskParam.CombatStrategyPath);
     }
 
     public async void Start()
@@ -43,8 +40,9 @@ public class AutoFightTask
             var combatScenes = new CombatScenes().InitializeTeam(GetContentFromDispatcher());
             if (!combatScenes.CheckTeamInitialized())
             {
-                throw new Exception("识别队伍角色失败，请在较暗背景下重试，比如游戏时间调整成夜晚。或者直接使用强制指定当前队伍角色的功能。");
+                throw new Exception("识别队伍角色失败");
             }
+            var combatCommands = _combatScriptBag.FindCombatScript(combatScenes.Avatars);
 
             combatScenes.BeforeTask(_taskParam.Cts);
 
@@ -56,7 +54,7 @@ public class AutoFightTask
                     while (!_taskParam.Cts.Token.IsCancellationRequested)
                     {
                         // 通用化战斗策略
-                        foreach (var command in _combatCommands)
+                        foreach (var command in combatCommands)
                         {
                             command.Execute(combatScenes);
                         }
